@@ -1,0 +1,22 @@
+[package]
+name = "i3-utils"
+version = "0.1.0"
+authors = ["mandragore <gkonstandinos@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde_yaml = "0.8.8"
+linked-hash-map = "0.5.1"
+clap = "2.32.0"
+
+[dependencies.gtk]
+version = "0.5.0"
+features = ["v3_16"]
+
+[[bin]]
+name = "rmenu"
+path = "src/rmenu.rs"
+
+[[bin]]
+name = "adir"
+path = "src/adir.rs"
