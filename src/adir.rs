@@ -113,7 +113,7 @@ impl Content {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
         match config.widget_config() {
-            WidgetConfig::Scale(ref scale_conf) => {
+            WidgetConfig::Scale(scale_conf) => {
                 let scale = gtk::Scale::new_with_range(
                     scale_conf.orientation(),
                     scale_conf.min_val() as f64,
@@ -124,7 +124,7 @@ impl Content {
                 if scale_conf.hide_value() {
                     scale.set_draw_value(false);
                 }
-                if let Some((pos, ref text)) = scale_conf.mark() {
+                if let Some((pos, text)) = scale_conf.mark() {
                     scale.add_mark(*pos as f64, gtk::PositionType::Left, text.as_str());
                 }
                 container.pack_start(&scale, true, true, 0);
@@ -137,7 +137,7 @@ impl Content {
                     })
                     .unwrap();
             }
-            WidgetConfig::Calendar(ref _calendar_config) => {
+            WidgetConfig::Calendar(_calendar_config) => {
                 let calendar = gtk::Calendar::new();
                 container.pack_start(&calendar, true, true, 0);
             }
