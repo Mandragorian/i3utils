@@ -1,5 +1,5 @@
 [package]
-name = "i3-utils"
+name = "i3utils"
 version = "0.1.0"
 authors = ["mandragore <gkonstandinos@gmail.com>"]
 edition = "2018"
