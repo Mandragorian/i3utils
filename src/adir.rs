@@ -6,44 +6,11 @@ use gtk::{
     StyleContextExt, WidgetExt,
 };
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, SubCommand};
 
-/// A struct that holds the shared configuration options.
-struct BaseConfig {
-    width: i32,
-    height: i32,
-    posx: i32,
-    posy: i32,
-    close_unfocus: bool,
-    class: String,
-}
-
-/// A struct that holds the configuration options used by the Scale dialog.
-struct ScaleConfig {
-    val: i32,
-    max_val: i32,
-    min_val: i32,
-    step: i32,
-    mark: Option<(i32, String)>,
-    orientation: gtk::Orientation,
-    hide_value: bool,
-}
-
-/// A struct that holds the configuration options used by the Calendar dialog.
-struct CalendarConfig {
-    _dummy: i32,
-}
-
-enum WidgetConfig {
-    Scale(ScaleConfig),
-    Calendar(CalendarConfig),
-}
-
-/// A struct that holds the base and widget-specific configurations.
-struct Config {
-    base_config: BaseConfig,
-    widget_config: WidgetConfig,
-}
+use i3utils::gtk::widgets::config::{
+    BaseConfig, CalendarConfig, Config, ScaleConfig, WidgetConfig,
+};
 
 pub struct Application {
     pub window: gtk::Window,
@@ -58,68 +25,6 @@ pub struct Header {
 
 pub struct Content {
     pub container: gtk::Box,
-}
-
-impl Config {
-    pub fn new(base_config: BaseConfig, widget_config: WidgetConfig) -> Config {
-        Config {
-            base_config,
-            widget_config,
-        }
-    }
-
-    pub fn width(&self) -> i32 {
-        self.base_config.width
-    }
-
-    pub fn height(&self) -> i32 {
-        self.base_config.height
-    }
-}
-
-impl BaseConfig {
-    pub fn new(matches: &ArgMatches) -> Result<BaseConfig, String> {
-        let width = matches
-            .value_of("width")
-            .unwrap_or("0")
-            .parse::<i32>()
-            .or(Err("Width is not an integer"))?;
-        let height = matches
-            .value_of("height")
-            .unwrap_or("0")
-            .parse::<i32>()
-            .or(Err("Height is not an integer"))?;
-
-        let posx = matches
-            .value_of("posx")
-            .expect("Argument with default value `posx', not specified")
-            .parse::<i32>()
-            .or(Err("posx is not an integer"))?;
-        let posy = matches
-            .value_of("posy")
-            .expect("Argument with default value `posy', not specified")
-            .parse::<i32>()
-            .or(Err("posy is not an integer"))?;
-
-        let class = matches.value_of("class").unwrap_or("").to_string();
-
-        let close_unfocus = matches.occurrences_of("close-unfocus") == 1;
-
-        Ok(BaseConfig {
-            class,
-            width,
-            height,
-            posx,
-            posy,
-            close_unfocus,
-        })
-    }
-}
-
-impl CalendarConfig {
-    pub fn new(_matches: &ArgMatches) -> CalendarConfig {
-        CalendarConfig { _dummy: 3 }
-    }
 }
 
 impl Header {
@@ -171,14 +76,14 @@ impl Application {
         // Set the title of the window.
         window.set_title("adir");
         // Set the window manager class.
-        window.set_wmclass("app-name", config.base_config.class.as_str());
+        window.set_wmclass("app-name", config.class().as_str());
         // The icon the app will display.
         gtk::Window::set_default_icon_name("iconname");
 
         // Add the content box into the window.
         window.add(&content.container);
         window.set_default_size(config.width(), config.height());
-        window.move_(config.base_config.posx, config.base_config.posy);
+        window.move_(config.posx(), config.posy());
 
         // Programs what to do when the exit button is used.
         window.connect_delete_event(move |_, _| {
@@ -186,7 +91,7 @@ impl Application {
             gtk::Inhibit(false)
         });
 
-        if config.base_config.close_unfocus {
+        if config.close_unfocus() {
             window
                 .connect("focus-out-event", false, |_| {
                     gtk::main_quit();
@@ -210,20 +115,20 @@ impl Content {
         // Create a vertical box to store all of it's inner children vertically.
         let container = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
-        match config.widget_config {
+        match config.widget_config() {
             WidgetConfig::Scale(ref scale_conf) => {
                 let scale = gtk::Scale::new_with_range(
-                    scale_conf.orientation,
-                    scale_conf.min_val as f64,
-                    scale_conf.max_val as f64,
-                    scale_conf.step as f64,
+                    scale_conf.orientation(),
+                    scale_conf.min_val() as f64,
+                    scale_conf.max_val() as f64,
+                    scale_conf.step() as f64,
                 );
-                scale.set_value(scale_conf.val as f64);
-                if scale_conf.hide_value {
+                scale.set_value(scale_conf.val() as f64);
+                if scale_conf.hide_value() {
                     scale.set_draw_value(false);
                 }
-                if let Some((pos, ref text)) = scale_conf.mark {
-                    scale.add_mark(pos as f64, gtk::PositionType::Left, text.as_str());
+                if let Some((pos, ref text)) = scale_conf.mark() {
+                    scale.add_mark(*pos as f64, gtk::PositionType::Left, text.as_str());
                 }
                 container.pack_start(&scale, true, true, 0);
                 scale
@@ -242,66 +147,6 @@ impl Content {
         }
 
         Content { container }
-    }
-}
-
-impl ScaleConfig {
-    pub fn new(matches: &ArgMatches) -> Result<ScaleConfig, String> {
-        let max_val = matches
-            .value_of("maxval")
-            .expect("Argument with default value `max-value', not specified")
-            .parse::<i32>()
-            .or(Err("max-value is not an integer"))?;
-
-        let min_val = matches
-            .value_of("minval")
-            .expect("Argument with default value `min-value', not specified")
-            .parse::<i32>()
-            .or(Err("min-value is not an integer"))?;
-
-        let val = matches
-            .value_of("val")
-            .expect("Argument with default value `value', not specified")
-            .parse::<i32>()
-            .or(Err("value is not an integer"))?;
-
-        let step = matches
-            .value_of("step")
-            .expect("Argument with default value `step', not specified")
-            .parse::<i32>()
-            .or(Err("step is not an integer"))?;
-
-        let orientation = if matches.occurrences_of("vertical") == 1 {
-            gtk::Orientation::Vertical
-        } else {
-            gtk::Orientation::Horizontal
-        };
-
-        let hide_value = matches.occurrences_of("hide-val") == 1;
-
-        let mark = match matches.value_of("mark") {
-            None => None,
-            Some(s) => {
-                let mut split = s.split(":");
-                let text = split.next().unwrap_or("").to_string();
-                let pos = split
-                    .next()
-                    .ok_or("mark argument provided but not position")?
-                    .parse::<i32>()
-                    .or(Err("not a valid position for a mark"))?;
-                Some((pos, text))
-            }
-        };
-
-        Ok(ScaleConfig {
-            val,
-            max_val,
-            min_val,
-            step,
-            mark,
-            orientation,
-            hide_value,
-        })
     }
 }
 
