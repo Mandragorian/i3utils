@@ -1,7 +1,3 @@
-extern crate clap;
-extern crate linked_hash_map;
-extern crate serde_yaml;
-
 use std::io::prelude::*;
 
 use std::fs::File;

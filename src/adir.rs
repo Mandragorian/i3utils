@@ -1,6 +1,3 @@
-extern crate clap;
-extern crate gtk;
-
 use gtk::{
     BoxExt, ContainerExt, GtkWindowExt, HeaderBarExt, ObjectExt, RangeExt, ScaleExt,
     StyleContextExt, WidgetExt,

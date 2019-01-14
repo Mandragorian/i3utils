@@ -1,5 +1,3 @@
-extern crate gtk;
-
 use clap::ArgMatches;
 
 /// A struct that holds the shared configuration options.
