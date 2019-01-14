@@ -5,7 +5,6 @@ use gtk::{
     BoxExt, ContainerExt, GtkWindowExt, HeaderBarExt, ObjectExt, RangeExt, ScaleExt,
     StyleContextExt, WidgetExt,
 };
-use std::process;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
@@ -430,10 +429,7 @@ fn main() -> Result<(), String> {
     let parser = create_parser();
     let matches = parser.get_matches();
     // Initialize GTK before proceeding.
-    if gtk::init().is_err() {
-        eprintln!("failed to initialize GTK Application");
-        process::exit(1);
-    }
+    gtk::init().or(Err("Failed to initialize GTK application"))?;
 
     let (widget_name, submatches) = matches.subcommand();
     let submatches = submatches.ok_or("Command not specified")?;
